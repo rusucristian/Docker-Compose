@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 5s
+  external_labels:
+    monitor: 'node'
+
+scrape_configs:
+  - job_name: 'nodes'
+    static_configs:
+#      - targets: ['localhost:9090','node-exporter:9100','node-exporter','192.168.122.10:9100']   lucreaza, doar exemplu
+      - targets: ['node-exporter:9100']
