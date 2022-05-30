@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    user: 1000:1000
+    container_name: prometheus
+    networks:
+      - web_proxy
+      - prometheus_net
+    expose:
+      - 9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus/data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - node-exporter
+    labels:
+      - traefik.docker.network=web_proxy
+      - traefik.http.routers.prometheus.rule=Host(`prometheus.example.com`)
+      - traefik.http.routers.prometheus.tls=true
+      - traefik.http.routers.prometheus.middlewares=auth
+      - traefik.http.routers.prometheus.tls.certresolver=lets-encrypt
+      - traefik.port=9090
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: prometheus-node_exporter
+    restart: unless-stopped
+    ports:
+      - 9100
+    expose:
+      - 9100
+    networks:
+      - prometheus_net
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.ignored-mount-points="^(/rootfs|/host)/(sys|proc|dev|host|etc)($$|/)"'
+      - '--collector.filesystem.ignored-fs-types="^(sys|proc|auto|cgroup|devpts|ns|au|fuse\.lxc|mqueue)(fs|)$$"'
+
+networks:
+  web_proxy:
+    external: true
+  prometheus_net:
+    external: false
