@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    restart: always
+    networks:
+      - web_proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer-front.rule=Host(`portainer.example.com`)
+      - traefik.http.routers.portainer-front.entrypoints=websecure
+      - traefik.http.services.portainer-front.loadbalancer.server.port=9000
+      - traefik.http.routers.portainer-front.service=portainer-front
+      - traefik.http.routers.portainer-front.tls=true
+      - traefik.http.routers.portainer-front.tls.certresolver=lets-encrypt
+
+networks:
+  web_proxy:
+    external: true
