@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  homer:
+    image: b4bz/homer
+    container_name: homer
+    restart: always
+    networks:
+      - web_proxy
+    expose:
+      - 8080
+    environment:
+      - GID=1000
+      - UID=1000
+    volumes:
+      - ./assets:/www/assets
+    labels:
+      - traefik.http.routers.homer.rule=Host(`dashboard.example.com`)
+      - traefik.http.routers.homer.tls=true
+      - traefik.http.routers.homer.tls.certresolver=lets-encrypt
+      - traefik.http.routers.homer.middlewares=auth
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$2y5$$fhM.cvIKu65TDSudVcbsc>
+      - traefik.port=8080
+
+networks:
+  web_proxy:
+    external: true
