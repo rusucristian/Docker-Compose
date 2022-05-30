@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks:
+      - web_proxy
+    restart: always
+    volumes:
+      - ./data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${user}
+      - GF_SECURITY_ADMIN_PASSWORD=${password}
+    labels:
+      - traefik.http.routers.grafana.rule=Host(`grafana.example.com`)
+      - traefik.http.routers.grafana.tls=true
+      - traefik.http.routers.grafana.tls.certresolver=lets-encrypt
+      - traefik.port=3000
+
+networks:
+  web_proxy:
+    external: true
