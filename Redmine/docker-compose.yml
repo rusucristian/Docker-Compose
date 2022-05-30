@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  redmine:
+    image: redmine:latest
+    container_name: redmine
+    restart: always
+    expose:
+      - 3000
+    depends_on:
+      - db
+    networks:
+      - redmine_net
+      - web_proxy
+    env_file:
+      - ./env_vars/.env_redmine
+    volumes:
+      - ./upload:/usr/src/redmine/files
+      - ./www:/usr/src/redmine/cristi
+    labels:
+      - traefik.docker.network=web_proxy
+      - traefik.http.routers.redmine.rule=Host(`redmine.rusucristian.info`)
+      - traefik.http.routers.redmine.tls=true
+      - traefik.http.routers.redmine.tls.certresolver=lets-encrypt
+      - traefik.port=3000
+
+  db:
+    image: mysql
+    user: 1000:1000
+    container_name: redmine_db
+    restart: always
+    networks:
+      - redmine_net
+    volumes:
+      - ./data:/var/lib/mysql
+    env_file:
+      - ./env_vars/.env_db
+
+networks:
+  redmine_net:
+    external: false
+  web_proxy:
+    external: true
