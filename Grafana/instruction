@@ -1,0 +1,2 @@
+before run command docker-compose up -d:
+  sudo chown 472:472 ./data
