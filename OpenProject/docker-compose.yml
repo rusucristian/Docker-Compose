@@ -15,7 +15,7 @@ services:
       - ./assets:/var/openproject/assets
     environment:
       - SERVER_HOSTNAME=project.example.com
-      - SECRET_KEY_BASE=cristi
+      - SECRET_KEY_BASE=test
     labels:
       - traefik.http.routers.openproject.rule=Host(`project.example.com`)
       - traefik.http.routers.openproject.tls=true
