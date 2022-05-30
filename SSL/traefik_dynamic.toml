@@ -1,0 +1,38 @@
+[http.middlewares.simpleAuth.basicAuth]
+  users = [
+    "test:$ar1$sPwb$O"
+  ]
+
+[http.routers.api]
+  rule = "Host(`traefik.example.com`)"
+  entrypoints = ["websecure"]
+  middlewares = ["simpleAuth"]
+  service = "api@internal"
+  [http.routers.api.tls]
+    certResolver = "lets-encrypt"
+
+[http.routers.mt]
+    entryPoints = ["websecure"]
+    rule = "Host(`mt.example.com`)"
+    service = "mt"
+    middlewares = ["simpleAuth"]
+    [http.routers.mt.tls]
+      certResolver = "lets-encrypt"
+
+[http.services.mt]
+  [http.services.mt.loadBalancer]
+    [[http.services.mt.loadBalancer.servers]]
+      url = "http://192.168.88.1/"
+
+[http.routers.jenkins]
+    entryPoints = ["websecure"]
+    rule = "Host(`jenkins.example.com`)"
+    service = "jenkins"
+#    middlewares = ["simpleAuth"]
+    [http.routers.jenkins.tls]
+      certResolver = "lets-encrypt"
+
+[http.services.jenkins]
+  [http.services.jenkins.loadBalancer]
+    [[http.services.jenkins.loadBalancer.servers]]
+      url = "http://192.168.88.3:8080/"
