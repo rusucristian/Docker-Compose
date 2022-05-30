@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+
+  openproject:
+    image: openproject/community:12
+    container_name: OpenProject
+    networks:
+      - web_proxy
+    expose:
+      - 80
+    restart: always
+    volumes:
+      - ./pgdata:/var/openproject/pgdata
+      - ./assets:/var/openproject/assets
+    environment:
+      - SERVER_HOSTNAME=project.example.com
+      - SECRET_KEY_BASE=cristi
+    labels:
+      - traefik.http.routers.openproject.rule=Host(`project.example.com`)
+      - traefik.http.routers.openproject.tls=true
+      - traefik.http.routers.openproject.tls.certresolver=lets-encrypt
+      - traefik.port=80
+
+networks:
+  web_proxy:
+    external: true
