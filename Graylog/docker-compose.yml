@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: "mongo:5.0.9"
+    container_name: graylog_db
+    volumes:
+      - ./mongodb_data:/data/db
+    restart: "on-failure"
+    networks:
+      - graylog_net
+
+  elasticsearch:
+    environment:
+      ES_JAVA_OPTS: "-Xms128m -Xmx128m -Dlog4j2.formatMsgNoLookups=true"     #best practices to allow more 1G
+      bootstrap.memory_lock: "true"
+      discovery.type: "single-node"
+      http.host: "0.0.0.0"
+      action.auto_create_index: "false"
+    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2"
+    container_name: graylog_es
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+    volumes:
+      - "./es_data:/usr/share/elasticsearch/data"
+    restart: "on-failure"
+    networks:
+      - graylog_net
+
+  graylog:
+    image: "graylog/graylog:4.3"
+    container_name: graylog
+    depends_on:
+      elasticsearch:
+        condition: "service_started"
+      mongodb:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh"
+    environment:
+      GRAYLOG_PASSWORD_SECRET: ${GRAYLOG_PASSWORD_SECRET}
+      GRAYLOG_ROOT_PASSWORD_SHA2: ${GRAYLOG_ROOT_PASSWORD_SHA2}
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+    networks:
+      - web_proxy
+      - graylog_net
+    ports:
+      - 9000
+      - 1514
+      - 1514/udp
+      - 12201 # GELF TCP
+      - 12201/udp # GELF UDP
+    volumes:
+      - ./graylog_data:/usr/share/graylog/data/data
+    restart: "on-failure"
+    labels:
+      - traefik.docker.network=web_proxy
+      - traefik.http.routers.graylog.rule=Host(`graylog.example.com`)
+      - traefik.http.routers.graylog.tls=true
+      - traefik.http.routers.graylog.tls.certresolver=lets-encrypt
+      - traefik.http.services.graylog.loadbalancer.server.port=9000         # correct label for 2-version of traefik
+
+networks:
+  web_proxy:
+    external: true
+  graylog_net:
+    external: false
