@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  firefly:
+    image: fireflyiii/core:latest
+    container_name: firefly
+    restart: always
+    env_file: .env_app
+    expose:
+      - 8080
+    volumes:
+      - ./data:/var/www/html/storage/upload
+    networks:
+      - web_proxy
+      - firefly_net
+    depends_on:
+      - db
+    labels:
+      - traefik.docker.network=web_proxy
+      - traefik.http.routers.firefly.rule=Host(`finance.example.com`)
+      - traefik.http.routers.firefly.tls=true
+      - traefik.http.routers.firefly.tls.certresolver=lets-encrypt
+      - traefik.http.services.firefly.loadbalancer.server.port=8080
+
+  db:
+    image: mysql
+    container_name: firefly_db
+    restart: always
+    env_file: .env_db
+    expose:
+      - 3306
+    volumes:
+      - ./db-data:/var/lib/mysql
+    networks:
+      - firefly_net
+
+networks:
+  web_proxy:
+    external: true
+  firefly_net:
+    external: false
